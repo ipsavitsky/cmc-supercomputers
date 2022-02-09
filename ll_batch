@@ -1,0 +1,12 @@
+#@ job_type = bluegene
+#@ bg_size = 128
+#@ wall_clock_limit = 00:15:00
+#@ class = n128_m15
+#@ bg_connection = PREFER_TORUS
+#@ bg_rotate = true
+#@ output = a.out.$(jobid).out
+#@ error = a.out.$(jobid).err
+#@ notification = never
+#@ queue
+/bgsys/drivers/ppcfloor/bin/mpirun -n 128 -env CMC_SITE_SPECIFIC=n128_m15 -mode dual -exe ./a.out -args '100000000'
+/bgsys/drivers/ppcfloor/bin/mpirun -n 64 -env CMC_SITE_SPECIFIC=n128_m15 -mode dual -exe ./a.out -args '100000000'
