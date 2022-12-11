@@ -10,14 +10,14 @@ void report(const char *msg, int coords[2]) {
     }
 }
 
-void send_coords_and_value(int coords[2], int value, int other_coords[2],
-                           int other_rank, MPI_Comm comm) {
+void send_coords_and_value(int coords[2], int value, int other_rank,
+                           MPI_Comm comm) {
     MPI_Send(coords, 2, MPI_INT, other_rank, 0, comm);
     MPI_Send(&value, 1, MPI_INT, other_rank, 0, comm);
 }
 
-void receive_coords_and_value(int coords[2], int *value, int other_coords[2],
-                              int other_rank, MPI_Comm comm) {
+void receive_coords_and_value(int *value, int other_coords[2], int other_rank,
+                              MPI_Comm comm) {
     MPI_Recv(other_coords, 2, MPI_INT, other_rank, 0, comm, MPI_STATUS_IGNORE);
     MPI_Recv(value, 1, MPI_INT, other_rank, 0, comm, MPI_STATUS_IGNORE);
 }
@@ -32,13 +32,12 @@ void collide_rows(int row_1, int row_2, int coords[2], int *a,
     if (coords[0] == row_1 || coords[0] == row_2) {
         other_coords[0] = coords[0] == row_1 ? coords[0] + 1 : coords[0] - 1;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        send_coords_and_value(best_coords, *a, other_coords, other_rank, comm);
+        send_coords_and_value(best_coords, *a, other_rank, comm);
     } else if (coords[0] == row_1 + 1 || coords[0] == row_2 - 1) {
         other_coords[0] =
             coords[0] == row_1 + 1 ? coords[0] - 1 : coords[0] + 1;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        receive_coords_and_value(recieved_coords, &result, recieved_coords,
-                                 other_rank, comm);
+        receive_coords_and_value(&result, recieved_coords, other_rank, comm);
         if (result > *a) {
             *a = result;
             best_coords[0] = recieved_coords[0];
@@ -47,8 +46,8 @@ void collide_rows(int row_1, int row_2, int coords[2], int *a,
     }
 }
 
-void compress_row(int row_n, int pl_l, int pl_r, int coords[2], int *a, int best_coords[2],
-                  MPI_Comm comm) {
+void compress_row(int row_n, int pl_l, int pl_r, int coords[2], int *a,
+                  int best_coords[2], MPI_Comm comm) {
     int result = 0;
     int recieved_coords[2];
     int other_rank = 0;
@@ -57,16 +56,15 @@ void compress_row(int row_n, int pl_l, int pl_r, int coords[2], int *a, int best
     other_coords[0] = coords[0];
 
     if (coords[0] == row_n && (coords[1] == pl_l || coords[1] == pl_r)) {
-        other_coords[1] = coords[1] == 0 ? coords[1] + 1 : coords[1] - 1;
+        other_coords[1] = coords[1] == pl_l ? coords[1] + 1 : coords[1] - 1;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        send_coords_and_value(best_coords, *a, other_coords, other_rank, comm);
+        send_coords_and_value(best_coords, *a, other_rank, comm);
     }
     if (coords[0] == row_n &&
         (coords[1] == pl_l + 1 || coords[1] == pl_r - 1)) {
-        other_coords[1] = coords[1] == 1 ? coords[1] - 1 : coords[1] + 1;
+        other_coords[1] = coords[1] == pl_l + 1 ? coords[1] - 1 : coords[1] + 1;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        receive_coords_and_value(recieved_coords, &result, recieved_coords,
-                                 other_rank, comm);
+        receive_coords_and_value(&result, recieved_coords, other_rank, comm);
         if (result > *a) {
             *a = result;
             best_coords[0] = recieved_coords[0];
@@ -113,13 +111,12 @@ int main(int argc, char *argv[]) {
     if (coords[0] == 3) {
         other_coords[0] = coords[0] - 1;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        send_coords_and_value(best_coords, a, other_coords, other_rank, comm);
+        send_coords_and_value(best_coords, a, other_rank, comm);
     }
     if (coords[0] == 2) {
         other_coords[0] = coords[0] + 1;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        receive_coords_and_value(recieved_coords, &result, recieved_coords,
-                                 other_rank, comm);
+        receive_coords_and_value(&result, recieved_coords, other_rank, comm);
         if (result > a) {
             a = result;
             best_coords[0] = recieved_coords[0];
@@ -129,45 +126,11 @@ int main(int argc, char *argv[]) {
     MPI_Barrier(comm);
     report("step 3", coords);
 
-    if (coords[0] == 2 && (coords[1] == 0 || coords[1] == 5)) {
-        other_coords[0] = coords[0];
-        other_coords[1] = coords[1] == 0 ? coords[1] + 1 : coords[1] - 1;
-        MPI_Cart_rank(comm, other_coords, &other_rank);
-        send_coords_and_value(best_coords, a, other_coords, other_rank, comm);
-    }
-    if (coords[0] == 2 && (coords[1] == 1 || coords[1] == 4)) {
-        other_coords[0] = coords[0];
-        other_coords[1] = coords[1] == 1 ? coords[1] - 1 : coords[1] + 1;
-        MPI_Cart_rank(comm, other_coords, &other_rank);
-        receive_coords_and_value(recieved_coords, &result, recieved_coords,
-                                 other_rank, comm);
-        if (result > a) {
-            a = result;
-            best_coords[0] = recieved_coords[0];
-            best_coords[1] = recieved_coords[1];
-        }
-    }
+    compress_row(2, 0, 5, coords, &a, best_coords, comm);
     MPI_Barrier(comm);
     report("step 4", coords);
 
-    if (coords[0] == 2 && (coords[1] == 1 || coords[1] == 4)) {
-        other_coords[0] = coords[0];
-        other_coords[1] = coords[1] == 1 ? coords[1] + 1 : coords[1] - 1;
-        MPI_Cart_rank(comm, other_coords, &other_rank);
-        send_coords_and_value(best_coords, a, other_coords, other_rank, comm);
-    }
-    if (coords[0] == 2 && (coords[1] == 2 || coords[1] == 3)) {
-        other_coords[0] = coords[0];
-        other_coords[1] = coords[1] == 2 ? coords[1] - 1 : coords[1] + 1;
-        MPI_Cart_rank(comm, other_coords, &other_rank);
-        receive_coords_and_value(recieved_coords, &result, recieved_coords,
-                                 other_rank, comm);
-        if (result > a) {
-            a = result;
-            best_coords[0] = recieved_coords[0];
-            best_coords[1] = recieved_coords[1];
-        }
-    }
+    compress_row(2, 1, 4, coords, &a, best_coords, comm);
     MPI_Barrier(comm);
     report("step 5", coords);
 
@@ -175,14 +138,13 @@ int main(int argc, char *argv[]) {
         other_coords[0] = coords[0];
         other_coords[1] = 2;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        send_coords_and_value(best_coords, a, other_coords, other_rank, comm);
+        send_coords_and_value(best_coords, a, other_rank, comm);
     }
     if (coords[0] == 2 && coords[1] == 2) {
         other_coords[0] = coords[0];
         other_coords[1] = 3;
         MPI_Cart_rank(comm, other_coords, &other_rank);
-        receive_coords_and_value(recieved_coords, &result, recieved_coords,
-                                 other_rank, comm);
+        receive_coords_and_value(&result, recieved_coords, other_rank, comm);
         if (result > a) {
             a = result;
             best_coords[0] = recieved_coords[0];
