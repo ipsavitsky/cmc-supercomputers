@@ -1,0 +1,58 @@
+\documentclass[12pt]{article}
+
+% \usepackage{identfirst}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+
+\usepackage{csquotes}
+\usepackage{amsmath}
+
+\usepackage{graphicx}
+\graphicspath{{pics/}}
+
+\usepackage{makecell}
+\usepackage{float}
+\usepackage[toc]{appendix}
+
+\usepackage{minted}
+
+\begin{document}
+\begin{titlepage}
+    \thispagestyle{empty}
+
+    \begin{center}
+        \begin{figure}[htbp]
+            \centering
+            \includegraphics[width=0.6\textwidth]{msu.png}
+        \end{figure}
+
+        Московский Государственный Университет им. М.В. Ломоносова
+
+        Факультет Вычислительной Математики и Кибернетики
+
+        Кафедра Автоматизации Систем Вычислительных Комплексов
+
+        \vfill
+        \textbf{\huge Задание по курсу "Распределённые системы"}
+
+        {\huge Отчёт}
+    \end{center}
+
+    \vfill
+    \begin{flushright}
+        {\large Выполнил:\\Савицкий Илья Павлович\\421 группа\\}
+    \end{flushright}
+
+    \centerline{Москва, 2022 год}
+
+\end{titlepage}
+\linespread{1.7}
+\setcounter{page}{2}
+\large
+\newpage
+
+\input{../task-1/report/report.tex}
+\input{../task-2/report/report.tex}
+\end{document}
