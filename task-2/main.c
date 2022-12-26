@@ -14,7 +14,7 @@ const float right_br = 10000; /* upper limit of integration */
 
 typedef double (*math_func)(double);
 
-double simpson(math_func f, double a, int num, double h) {
+double integrate(math_func f, double a, int num, double h) {
     int myid, numprocs;
     double x, sum = 0.0;
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
@@ -67,9 +67,8 @@ int main(int argc, char *argv[]) {
     int rank, source, dest, tag, count;
     MPI_Status status;
     double my_result;
-    pi = acos(-1.0); /* = 3.14159... */
-    a = 0.;          /* lower limit of integration */
-    b = 1;           /* upper limit of integration */
+    a = 0.;
+    b = 1;        
     n = (argc > 1) ? pow(2, atoi(argv[1]))
                    : 512; /* number of increment within each process */
 
@@ -97,7 +96,7 @@ int main(int argc, char *argv[]) {
     my_a = left_br + rank * my_range;
 
     startwtime = MPI_Wtime();
-    my_result = simpson(sqrt, my_a, num, h);
+    my_result = integrate(sqrt, my_a, num, h);
     my_time = MPI_Wtime() - startwtime;
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -136,7 +135,7 @@ int main(int argc, char *argv[]) {
                 my_a = left_br + ranks_gc[i] * my_range;
 
                 startwtime = MPI_Wtime();
-                my_result = simpson(sqrt, my_a, num, h);
+                my_result = integrate(sqrt, my_a, num, h);
                 my_time = MPI_Wtime() - startwtime;
 
                 printf("Recalculate : %d, my_a: %f, my_res: %f\n", ranks_gc[i],
